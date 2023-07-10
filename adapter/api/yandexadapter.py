@@ -60,8 +60,6 @@ class YandexAdapter(baseadapter.BaseAdapter):
         yandex.DiscountStationSumPaidCompleted = 0.0
         yandex.ContractId = None
 
-        response = self.send_order(json.dumps(yandex.__dict__))
-
-        return
+        return self.send_order(json.dumps(yandex.__dict__))
 
 

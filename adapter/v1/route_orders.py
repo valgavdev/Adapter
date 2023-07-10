@@ -24,7 +24,10 @@ def payment(order: models.Order, ts94=Depends(dependencies.get_ts94)) -> models.
 
     if order.columnId > 1:
         raise PumpBusy()
-    order.orderId = ts94.confirm(order)#.payment(order)
+
+    if not order.paid:
+        order.orderId = ts94.payment_confirm('payment', order)
+
     return order
 
 

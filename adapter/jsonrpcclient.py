@@ -21,7 +21,7 @@ class JSONRPCClient(object):
         header.update({'Content-Type': 'application/json; indent=4'})
         answ = requests.post(f'{self.__url}{version}', headers=header,
                              data=json.dumps(self.__create_body(method, rpc_id, **params)),
-                             timeout=30)
+                             timeout=30, verify=False)
         self.__raise_for_status(answ)
 
         return answ.json()  # комментирую. Надо разбираться. В это месте может генерится exception, что не совсем правильно,

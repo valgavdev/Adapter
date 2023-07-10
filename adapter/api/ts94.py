@@ -1,5 +1,7 @@
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
+from dataclasses_json import config
+
 import uuid
 from typing import Optional
 from ..logger import http_logger
@@ -9,6 +11,10 @@ from . import models
 from ..exceptions import NotConnected
 from .. import jsonrpcclient
 
+
+def ExcludeIfNone(value):
+    """Do not include field for None values"""
+    return value is None
 
 @dataclass
 class ConnectionInfo:
@@ -37,10 +43,10 @@ class OrderInfo:
 
 @dataclass
 class Deal:
-    emitent: int
     provider: int
     POS: Pos
-    card: Optional[str] = None
+    emitent: int
+    card: Optional[str] = None # = field(metadata=config(exclude=ExcludeIfNone), default=None)
     order: Optional[OrderInfo] = None
     payment_id: Optional[str] = None
 
@@ -62,44 +68,76 @@ class TS94(object):
                                       params={'username': self.__login, 'password': self.__password})
         return response['result']
 
-    def payment(self, order: models.Order):
-        ord: OrderInfo = OrderInfo(service=Service(order.serviceId), price=order.price)
-        if order.type == models.OrderType.Money:
-            ord.cost = order.amount
+    def payment_confirm(self, method: str, order: models.Order):
+        orderInfo: OrderInfo = None
+        emitent = order.payInfo.emitent
+        card = None
+        payment_id = None
+
+        if method == 'payment':
+            orderInfo = OrderInfo(service=Service(order.serviceId), price=order.price)
+            card = order.payInfo.identifier
+            if order.type == models.OrderType.Money:
+                orderInfo.cost = order.amount
+            else:
+                orderInfo.quantity = order.amount
         else:
-            ord.quantity = order.amount
+            payment_id = order.orderId
 
-        payment = Deal(
-            emitent=order.payInfo.emitent,
-            card=order.payInfo.identifier,
+        deal = Deal(
+            emitent=emitent,
+            card=card,
             provider=order.pos.provider,
             POS=Pos(
                 order.pos.identifier
-            ), order=ord)
+            ), order=orderInfo, payment_id=payment_id)
 
-        http_logger.info(f'payment:{asdict(payment)}')
+        http_logger.info(f'payment:{asdict(deal)}')
 
-        response = self.__client.exec('payment', str(uuid.uuid4()), version='v1', header=self.__headers(),
-                                      params=asdict(payment))
-
-        http_logger.info(f'response: {response}')
-        return response['result']
-
-    def confirm(self, order: models.Order):
-        confirm = Deal(
-            emitent=order.payInfo.emitent,
-            provider=order.pos.provider,
-            POS=Pos(
-                order.pos.identifier
-            ), payment_id=order.orderId)
-
-        http_logger.info(f'confirm:{asdict(confirm)}')
-
-        response = self.__client.exec('payment_confirm', str(uuid.uuid4()), version='v1', header=self.__headers(),
-                                      params=asdict(confirm))
+        response = self.__client.exec(method, str(uuid.uuid4()), version='v1', header=self.__headers(),
+                                      params=asdict(deal))
 
         http_logger.info(f'response: {response}')
         return response['result']
 
     def cancel(self, order: models.Order):
         pass
+
+    # def payment(self, order: models.Order):
+    #     orderInfo: OrderInfo = OrderInfo(service=Service(order.serviceId), price=order.price)
+    #     if order.type == models.OrderType.Money:
+    #         ord.cost = order.amount
+    #     else:
+    #         ord.quantity = order.amount
+    #
+    #     payment = Deal(
+    #         emitent=order.payInfo.emitent,
+    #         card=order.payInfo.identifier,
+    #         provider=order.pos.provider,
+    #         POS=Pos(
+    #             order.pos.identifier
+    #         ), order=orderInfo)
+    #
+    #     http_logger.info(f'payment:{asdict(payment)}')
+    #
+    #     response = self.__client.exec('payment', str(uuid.uuid4()), version='v1', header=self.__headers(),
+    #                                   params=asdict(payment))
+    #
+    #     http_logger.info(f'response: {response}')
+    #     return response['result']
+    #
+    # def confirm(self, order: models.Order):
+    #     confirm = Deal(
+    #         emitent=order.payInfo.emitent,
+    #         provider=order.pos.provider,
+    #         POS=Pos(
+    #             order.pos.identifier
+    #         ), payment_id=order.orderId)
+    #
+    #     http_logger.info(f'confirm:{asdict(confirm)}')
+    #
+    #     response = self.__client.exec('payment_confirm', str(uuid.uuid4()), version='v1', header=self.__headers(),
+    #                                   params=asdict(confirm))
+    #
+    #     http_logger.info(f'response: {response}')
+    #     return response['result']
