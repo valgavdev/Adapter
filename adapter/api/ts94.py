@@ -36,12 +36,13 @@ class OrderInfo:
 
 
 @dataclass
-class Payment:
+class Deal:
     emitent: int
-    card: str
     provider: int
     POS: Pos
-    order: OrderInfo
+    card: Optional[str] = None
+    order: Optional[OrderInfo] = None
+    payment_id: Optional[str] = None
 
 
 class TS94(object):
@@ -68,7 +69,7 @@ class TS94(object):
         else:
             ord.quantity = order.amount
 
-        payment = Payment(
+        payment = Deal(
             emitent=order.payInfo.emitent,
             card=order.payInfo.identifier,
             provider=order.pos.provider,
@@ -81,12 +82,24 @@ class TS94(object):
         response = self.__client.exec('payment', str(uuid.uuid4()), version='v1', header=self.__headers(),
                                       params=asdict(payment))
 
-        http_logger.info('test payment')
         http_logger.info(f'response: {response}')
         return response['result']
 
     def confirm(self, order: models.Order):
-        pass
+        confirm = Deal(
+            emitent=order.payInfo.emitent,
+            provider=order.pos.provider,
+            POS=Pos(
+                order.pos.identifier
+            ), payment_id=order.orderId)
+
+        http_logger.info(f'confirm:{asdict(confirm)}')
+
+        response = self.__client.exec('payment_confirm', str(uuid.uuid4()), version='v1', header=self.__headers(),
+                                      params=asdict(confirm))
+
+        http_logger.info(f'response: {response}')
+        return response['result']
 
     def cancel(self, order: models.Order):
         pass
