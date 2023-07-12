@@ -11,6 +11,11 @@ class CardNotExist(BaseException):
         super().__init__(101, 'Карта не найдена')
 
 
+class CardInvalidNumber(BaseException):
+    def __init__(self):
+        super().__init__(102, 'Неверный номер карты')
+
+
 class PumpBusy(BaseException):
     def __init__(self):
         super().__init__(1008, 'Колонка занята')
@@ -24,4 +29,3 @@ class NotConnected(BaseException):
 class TS94Exception(BaseException):
     def __init__(self, code: int, text: str):
         super().__init__(code + 1000, text)
-

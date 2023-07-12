@@ -22,7 +22,7 @@ def payment(order: models.Order, ts94=Depends(dependencies.get_ts94)) -> models.
     # if order.payInfo.identifier != '926088':
     #     raise CardNotExist()
 
-    if order.columnId > 1:
+    if order.columnId == 2:
         raise PumpBusy()
 
     if not order.paid:

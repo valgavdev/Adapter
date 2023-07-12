@@ -1,6 +1,5 @@
 import json
 from dataclasses import dataclass, asdict, field
-from dataclasses_json import config
 
 import uuid
 from typing import Optional
@@ -8,13 +7,14 @@ from ..logger import http_logger
 
 from . import models
 # from .models import Payment, OrderInfo
-from ..exceptions import NotConnected
+from ..exceptions import NotConnected, CardInvalidNumber
 from .. import jsonrpcclient
 
 
 def ExcludeIfNone(value):
     """Do not include field for None values"""
     return value is None
+
 
 @dataclass
 class ConnectionInfo:
@@ -46,7 +46,7 @@ class Deal:
     provider: int
     POS: Pos
     emitent: int
-    card: Optional[str] = None # = field(metadata=config(exclude=ExcludeIfNone), default=None)
+    card: Optional[int] = None  # = field(metadata=config(exclude=ExcludeIfNone), default=None)
     order: Optional[OrderInfo] = None
     payment_id: Optional[str] = None
 
@@ -76,7 +76,11 @@ class TS94(object):
 
         if method == 'payment':
             orderInfo = OrderInfo(service=Service(order.serviceId), price=order.price)
-            card = order.payInfo.identifier
+            try:
+                card = int(order.payInfo.identifier)
+            except ValueError:
+                raise CardInvalidNumber()
+
             if order.type == models.OrderType.Money:
                 orderInfo.cost = order.amount
             else:
