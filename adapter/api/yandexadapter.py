@@ -6,6 +6,8 @@ from .yandex import models as yandexmodels
 from .yandex.protocol import YandexApi
 import requests
 
+from ..exceptions import PumpBusy, StationOrPumpNotFound
+
 
 class YandexAdapter(baseadapter.BaseAdapter):
     def payment(self, orders: models.Order) -> models.Order:
@@ -18,7 +20,12 @@ class YandexAdapter(baseadapter.BaseAdapter):
 
     def send_order(self, json: str) -> str:
         response = requests.post('http://integrator.tap365.ru:3000/tanker/order', json= json,
-                                 params={'apikey': 'test_8sdkqtutp85w82qxrd6vjo'})
+                                 params={'apikey': 'v4uam9kc4zsrps71v3p7gkg7'})
+
+        if response.status_code == 404:
+            raise PumpBusy()
+        if response.status_code == 400:
+            raise StationOrPumpNotFound()
         response.raise_for_status()
         return response.json()
 

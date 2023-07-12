@@ -3,7 +3,7 @@ import string
 import random
 from typing import Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from fastapi import Depends
 
@@ -33,7 +33,10 @@ def payment(order: models.Order, ts94=Depends(dependencies.get_ts94)) -> models.
 
 
 @router_v1.post("/order_status", tags=['Заказы'], summary='Статус заказа')
-def order_status(apikey: Optional[str] = None):
+async def order_status(request: Request, apikey: Optional[str] = None):
+    s ='gaga'
+    resp = await request.body()
+
     return ''
 
 

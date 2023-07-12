@@ -18,7 +18,17 @@ class CardInvalidNumber(BaseException):
 
 class PumpBusy(BaseException):
     def __init__(self):
-        super().__init__(1008, 'Колонка занята')
+        super().__init__(2404, 'Колонка занята')
+
+
+class StationOrPumpNotFound(BaseException):
+    def __init__(self):
+        super().__init__(2400, 'Неверный идентификатор станции или ТРК')
+
+
+class PriceIncorrect(BaseException):
+    def __init__(self):
+        super().__init__(2402, 'Несоответсвие цены')
 
 
 class NotConnected(BaseException):
