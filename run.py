@@ -1,8 +1,12 @@
 import uvicorn
 
+from adapter.api.models import OrderType
 from adapter.main import app
 
-uvicorn.run(app, host="0.0.0.0", port=5000)
+#uvicorn.run(app, host="0.0.0.0", port=5000)
+
+orderType = 1
+t:str = OrderType(orderType).name
 # from sqlalchemy.orm import create_session
 # from sqlalchemy import create_engine, Column, Integer
 # from sqlalchemy.orm import declarative_base

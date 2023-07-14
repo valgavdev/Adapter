@@ -9,28 +9,6 @@ from adapter import openapi
 from enumex import IntEnumDesc
 
 
-# class Fuel:
-#     serviceId: int
-#     name: str
-#
-#
-# class Price(BaseModel):
-#     serviceId: int = Field(..., title='Идентификатор услуги')
-#     name: str = Field(..., title='Наименование услуги')
-#     price: float = Field(..., title='Цена услуги за еденицу')
-#
-#
-# class Pump(BaseModel):
-#     number: int = Field(..., title='Номер колонки')
-#     fuels: List[Fuel] = Field(..., title='Список доступных видов н/п на колонке')
-#
-#
-# class StationInfo(BaseModel):
-#     id: int = Field(..., title='Идентификатор АЗС')
-#     privider: int = Field(..., title='Идентификатор системы управления АЗС')
-#     enable: bool = Field(..., title='Состояние АЗС')
-#     pumps: List[Pump] = Field(..., title='Список колонок')
-#     prices: List[Price] = Field(..., title='Список цен')
 @dataclass
 class Fuel:
     serviceId: int = Field(..., title='Идентификатор услуги')
@@ -67,6 +45,12 @@ class StationInfo:
 class Book(BaseModel):
     id: int = Field(..., title='Идентификатор')
     name: str = Field(..., title='Наименовние')
+
+class ProviderInfo:
+    id: int
+    provider_name: str
+    provider_type_name: str
+    connection_info: str
 
 
 class MapGoods(BaseModel):

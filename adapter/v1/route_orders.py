@@ -1,6 +1,7 @@
 import json
 import string
 import random
+from enum import Enum
 from typing import Optional
 
 from fastapi import HTTPException, Request
@@ -13,10 +14,12 @@ from adapter import dependencies
 import exceptionex
 from ..api.ts94 import TS94
 from ..exceptions import CardNotExist, PumpBusy
+from ..logger import http_logger
 
 
 @router_v1.post("/payment", tags=['Заказы'], summary='Оформление заказа')
-def payment(order: models.Order, ts94=Depends(dependencies.get_ts94)) -> models.Order:  # , user: str = Depends(dependencies.check_token)
+def payment(order: models.Order,
+            ts94=Depends(dependencies.get_ts94)) -> models.Order:  # , user: str = Depends(dependencies.check_token)
     # adapter = baseadapter.BaseAdapter.create(order.pos.provider)
     # return adapter.payment(order)
     # if order.payInfo.identifier != '926088':
@@ -31,16 +34,24 @@ def payment(order: models.Order, ts94=Depends(dependencies.get_ts94)) -> models.
     return order
 
 
+class StatusType(str, Enum):
+    accept = 'accept'
+    canceled = 'canceled'
+    fueling = 'fueling'
+    completed = 'completed'
+    bank_card_ticket = 'bank_card_ticket'
 
-@router_v1.post("/order_status", tags=['Заказы'], summary='Статус заказа')
-async def order_status(request: Request, apikey: Optional[str] = None):
-    s ='gaga'
-    resp = await request.body()
 
-    return ''
+@router_v1.post("/order_status/{status}")
+@router_v1.post("/order_status/{rest_of_path:path}/{status}", tags=['Заказы'], summary='Статус заказа')
+def order_status(status: StatusType, rest_of_path: Optional[str] = None, apikey: Optional[str] = None,
+                 orderId: Optional[str] = None, litre: Optional[float] = None, extendedOrderId: Optional[str] = None,
+                 extendedDate: Optional[str] = None, reason: Optional[str] = None):
+    #if status == StatusType.accept:
+    if reason:
+        http_logger.info(f'reason:{reason}')
+    return
 
 
 def generate_random_string(n):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
-
-

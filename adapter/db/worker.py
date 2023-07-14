@@ -4,7 +4,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import create_session
 from sqlalchemy import and_
 
-from . import db_engine, Provider, Price, Vw, MapGoods
+from . import db_engine, Provider, Price, Vw, MapGoods, ProviderInfo
 
 
 class Worker(object):
@@ -21,6 +21,12 @@ class Worker(object):
     def providers(self):
         return self.__session.query(Provider).order_by(Provider.id)
 
+    def provider_info(self, provider: Optional[int] = None):
+        query = self.__session.query(ProviderInfo).order_by(ProviderInfo.id)
+        if provider:
+            return query.filter(ProviderInfo.id == provider)
+        return query
+
     def map_goods(self, provider: Optional[int] = None):
         query = self.__session.query(MapGoods).order_by(MapGoods.provider, MapGoods.goods_id)
         if provider:
@@ -34,10 +40,10 @@ class Worker(object):
         else:
             cond = (Vw.provider == provider)
 
-        q = self.__session.query(Vw).order_by(Vw.station, Vw.pump).filter(cond)
-        print(str(q.statement.compile(dialect=postgresql.dialect())))
+        query = self.__session.query(Vw).order_by(Vw.station, Vw.pump).filter(cond)
+        print(str(query.statement.compile(dialect=postgresql.dialect())))
 
-        return q
+        return query
 
     def prices(self):
         return self.__session.query(Price)

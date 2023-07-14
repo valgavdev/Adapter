@@ -17,4 +17,4 @@ def create_db(sets: Settings):
     return create_engine("postgresql+psycopg2://{}:{}@{}/{}".format(con_info.user,
                                                                     con_info.password,
                                                                     con_info.server,
-                                                                    con_info.dbname))
+                                                                    con_info.dbname), pool_pre_ping=True)

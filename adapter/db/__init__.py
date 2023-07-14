@@ -21,6 +21,10 @@ class Provider(Base, IView):
 
 # class Price(Base, IView):
 #     __table__ = Table('station_price', metadata, autoload=True)
+class ProviderInfo(Base, IView):
+    __table__ = Table('_vw_providers', metadata, Column("id", Integer, primary_key=True), autoload_with=db_engine)
+
+
 class Price(Base, IView):
     __table__ = Table('_vw_station_prices', metadata, Column("id", Integer, primary_key=True), autoload_with=db_engine)
 
