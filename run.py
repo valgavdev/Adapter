@@ -3,10 +3,23 @@ import uvicorn
 from adapter.api.models import OrderType
 from adapter.main import app
 
-#uvicorn.run(app, host="0.0.0.0", port=5000)
+uvicorn.run(app, host="0.0.0.0", port=5000)
 
-orderType = 1
-t:str = OrderType(orderType).name
+# ty: int = 0
+# order_amount: int = 47340
+# order_price: int = 5000
+#
+# sum: float
+# litres: float
+#
+# s:float = order_amount / order_price
+# if ty == 0:
+#     litres = float(order_amount / order_price) / 100
+
+
+
+#orderType = 1
+#t:str = OrderType(orderType).name
 # from sqlalchemy.orm import create_session
 # from sqlalchemy import create_engine, Column, Integer
 # from sqlalchemy.orm import declarative_base

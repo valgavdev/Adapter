@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum
+from typing import Optional
 
 from enumex import IntEnumDesc
 
@@ -47,8 +48,8 @@ class Order:
     Sum: float              # сумма заказа
     Litre: float            # кол-во литров
     Status: OrderStatus     # статус заказ
-    DateEnd: datetime       # дата и время завершения заказа UTC
-    ReasonId: str           # идентификатор причины отмены заказа
-    Reason: str             # причина отмены
-    LitreCompleted: float   # итого сумма литров залито
-    SumPaidCompleted: float # итого оплачено по завершению заказа
+    DateEnd: Optional[datetime] = None      # дата и время завершения заказа UTC
+    ReasonId: Optional[str] = None           # идентификатор причины отмены заказа
+    Reason: Optional[str] = None             # причина отмены
+    LitreCompleted: Optional[float] = None   # итого сумма литров залито
+    SumPaidCompleted: Optional[float] = None # итого оплачено по завершению заказа

@@ -19,19 +19,20 @@ from ..logger import http_logger
 
 @router_v1.post("/payment", tags=['Заказы'], summary='Оформление заказа')
 def payment(order: models.Order,
-            ts94=Depends(dependencies.get_ts94)) -> models.Order:  # , user: str = Depends(dependencies.check_token)
-    # adapter = baseadapter.BaseAdapter.create(order.pos.provider)
+            ts94=Depends(dependencies.get_ts94), db=Depends(dependencies.get_db)) -> models.Order:  # , user: str = Depends(dependencies.check_token)
+    adapter = baseadapter.BaseAdapter.create(order.pos.provider, db, ts94)
+    s = adapter.payment(order)
     # return adapter.payment(order)
-    # if order.payInfo.identifier != '926088':
-    #     raise CardNotExist()
 
-    if order.columnId == 2:
-        raise PumpBusy()
-
-    if not order.paid:
-        order.orderId = ts94.payment_confirm('payment', order)
 
     return order
+
+
+# if order.columnId == 2:
+#     raise PumpBusy()
+#
+# if not order.paid:
+#     order.orderId = ts94.payment_confirm('payment', order)
 
 
 class StatusType(str, Enum):
@@ -47,7 +48,7 @@ class StatusType(str, Enum):
 def order_status(status: StatusType, rest_of_path: Optional[str] = None, apikey: Optional[str] = None,
                  orderId: Optional[str] = None, litre: Optional[float] = None, extendedOrderId: Optional[str] = None,
                  extendedDate: Optional[str] = None, reason: Optional[str] = None):
-    #if status == StatusType.accept:
+    # if status == StatusType.accept:
     if reason:
         http_logger.info(f'reason:{reason}')
     return

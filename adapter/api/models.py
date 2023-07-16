@@ -46,6 +46,8 @@ class Book(BaseModel):
     id: int = Field(..., title='Идентификатор')
     name: str = Field(..., title='Наименовние')
 
+
+@dataclass
 class ProviderInfo:
     id: int
     provider_name: str
@@ -57,6 +59,7 @@ class MapGoods(BaseModel):
     provider: int = Field(..., title='Идентификатор провайдера')
     goods: int = Field(..., title='Идентификатор услуги локальный')
     goods_ex: str = Field(..., title='Идентификатор услуги сторонний')
+
 
 class Errors:
     def __init__(self, code: int, errorText: str):
@@ -80,8 +83,8 @@ class ProviderType(IntEnumDesc):  # тип провайдера
     Yandex = (1, 'Yandex')
 
 
-class ProviderType(IntEnumDesc):  # код провайдера
-    InvoiceBox = (1, 'Инвойсбокс')
+# class ProviderType(IntEnumDesc):  # код провайдера
+#    InvoiceBox = (1, 'Инвойсбокс')
 
 
 class TypePlat(IntEnumDesc):
@@ -91,14 +94,15 @@ class TypePlat(IntEnumDesc):
 
 class Order(BaseModel):
     class __PayInfo(BaseModel):
-        emitent: int = Field(..., title='Идентификатор процессинга для финансовых расчетов')  # идентификатор процессинга для финансовых расчетов (Леонид, Инвойсбокс) ||||   1
+        emitent: int = Field(...,
+                             title='Идентификатор процессинга для финансовых расчетов')  # идентификатор процессинга для финансовых расчетов (Леонид, Инвойсбокс) ||||   1
         identifier: str = Field(...,
                                 title='Идентификатор платежа (номер карты)')  # идентификатор платежа (номер карты) (с чего списываем (банковская, куэр))
 
     class __Pos(BaseModel):
         provider: int = Field(..., title='Идентификатор системы управления АЗС',
-                                       description=openapi.descriptions.enum(
-                                           ProviderType))  # идентификатор системы управления АЗС   ПО POS ПРОВАЙДЕРА Инвойсбокс
+                              description=openapi.descriptions.enum(
+                                  ProviderType))  # идентификатор системы управления АЗС   ПО POS ПРОВАЙДЕРА Инвойсбокс
         identifier: str = Field(..., title='Идентификатор АЗС')  # идентификатор pos
 
     payInfo: Optional[__PayInfo]
