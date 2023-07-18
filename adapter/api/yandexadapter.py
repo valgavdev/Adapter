@@ -1,5 +1,8 @@
+import http
 import json
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from typing import Optional
 
 from fastapi import Depends
 
@@ -24,7 +27,9 @@ class YandexAdapter(baseadapter.BaseAdapter):
 
     def ping(self, stationId: str, columnId: int) -> bool:
         params = {'apikey': self.__apikey, 'stationId': stationId, 'columnId': columnId}
+
         response = requests.get(f"{self.__url}ping", params=params)
+
         if response.status_code == 200:
             return True
         else:
@@ -37,14 +42,17 @@ class YandexAdapter(baseadapter.BaseAdapter):
         orders.orderId = self.__ts94.payment_confirm('payment', orders)
 
         # конвертипм наш models.Order в order yandex
-        yandexOrder = self.convert_to(OrderStatus.OrderCreated, orders)
+        ya = self.convert_to(OrderStatus.OrderCreated, orders)
+
+        self.send_order(ya)
+
         api = YandexApi()
-        res = api.payment(yandexOrder)
+        res = api.payment(ya)
         # конвертим res в ответ для мобильного
         pass
 
-    def send_order(self, json: str) -> str:
-        response = requests.post(f"{self.__url}order", json=json,
+    def send_order(self, ya: yandexmodels.Order) -> str:
+        response = requests.post(f"{self.__url}order", json=asdict(ya),
                                  params={'apikey': self.__apikey})
 
         if response.status_code == 404:
@@ -55,25 +63,27 @@ class YandexAdapter(baseadapter.BaseAdapter):
         return response.json()
 
     def convert_to(self, status: OrderStatus, orders: models.Order) -> yandexmodels.Order:
-        yandex = yandexmodels.Order
+
+        yandex = yandexmodels.Order(Id=orders.orderId,
+                                    DateCreate=orders.date.isoformat(),
+                                    OrderType=OrderStatus(orders.type).name,
+                                    OrderVolume=orders.amount,
+                                    StationExtendedId=orders.pos.identifier,
+                                    ColumnId=orders.columnId,
+                                    FuelExtendedId=orders.serviceId,
+                                    Status=status.name,
+                                    PriceFuel=0.00,
+                                    Sum=0.00,
+                                    Litre=0.00)
 
         yandex.PriceFuel = float(orders.price) / 100
         if orders.type == OrderType.Money:
             yandex.Sum = float(orders.amount) / 100
-            yandex.Litre = round(orders.amount / orders.price, 2)
+            yandex.Litre = round(yandex.Sum / yandex.PriceFuel, 2)
         else:
             yandex.Litre = float(orders.amount) / 100
-            yandex.Sum = float(orders.price * orders.amount) / 100
+            yandex.Sum = round(float(orders.price * orders.amount) / 10000, 2)
 
-        yandex.Id = orders.orderId
-        yandex.DateCreate = orders.date
-        yandex.OrderType = OrderStatus(orders.type).name
-        yandex.OrderVolume = orders.amount
-        yandex.StationExtendedId = orders.pos
-        yandex.ColumnId = orders.columnId
-        yandex.FuelExtendedId = orders.serviceId
-        yandex.Status = status.name
-
-        return asdict(yandex)
+        return yandex
 
         # return self.send_order(json.dumps(yandex.__dict__))

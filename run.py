@@ -1,9 +1,36 @@
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import Optional
+
 import uvicorn
 
-from adapter.api.models import OrderType
 from adapter.main import app
+from enumex import IntEnumDesc
+
 
 uvicorn.run(app, host="0.0.0.0", port=5000)
+
+# @dataclass
+# class Order:
+#     Id: str 			    # идентификатор заказа !!!
+#     DateCreate: datetime    # дата и время создания в UTC
+#     OrderType: str    # тип заказа
+#     DateEnd: Optional[datetime] = None      # дата и время завершения заказа UTC
+#     ReasonId: Optional[str] = None           # идентификатор причины отмены заказа
+#     SumPaidCompleted: Optional[float] = None # итого оплачено по завершению заказа
+
+# class OrderType(IntEnumDesc):
+#     Money       = (0, 'Заправка на фиксированную сумму, OrderVolume – сумма рублей')
+#     Liters      = (1, 'Заправка на литры, OrderVolume – кол-вол литров')
+#     FullTank    = (2, 'Полный бак, OrderVolume – максимальная сумма рублей')
+#
+# @dataclass
+# class Test:
+#     gaga: OrderType
+#
+
+# print(asdict(t))
+
 
 # ty: int = 0
 # order_amount: int = 47340

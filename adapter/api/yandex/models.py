@@ -34,21 +34,21 @@ class OrderStatus(IntEnumDesc):
 #     "Status": "OrderCreated"
 # }
 
+
 @dataclass
 class Order:
-    Id: int 			    # идентификатор заказа !!!
-    DateCreate: datetime    # дата и время создания в UTC
-    OrderType: OrderType    # тип заказа
+    Id: str 			    # идентификатор заказа !!!
+    DateCreate: str    # дата и время создания в UTC
+    OrderType: str    # тип заказа
     OrderVolume: float      # значение заказа
     StationExtendedId: str  # внешний идентификатор станции АЗС
     ColumnId: int           # номер колонки
-    PriceId: str            # идентификатор прайса
     FuelExtendedId: str     # внешний идентификатор прайса
     PriceFuel: float        # стоимость 1 литра топлива
     Sum: float              # сумма заказа
     Litre: float            # кол-во литров
-    Status: OrderStatus     # статус заказ
-    DateEnd: Optional[datetime] = None      # дата и время завершения заказа UTC
+    Status: str     # статус заказ
+    DateEnd: Optional[str] = None      # дата и время завершения заказа UTC
     ReasonId: Optional[str] = None           # идентификатор причины отмены заказа
     Reason: Optional[str] = None             # причина отмены
     LitreCompleted: Optional[float] = None   # итого сумма литров залито

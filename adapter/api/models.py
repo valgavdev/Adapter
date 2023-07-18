@@ -50,6 +50,7 @@ class Book(BaseModel):
 @dataclass
 class ProviderInfo:
     id: int
+    type: int
     provider_name: str
     provider_type_name: str
     connection_info: str

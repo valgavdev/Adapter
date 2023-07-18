@@ -69,17 +69,3 @@ def get_mapping_goods(provider: Optional[int] = None, db=Depends(dependencies.ge
     json = {'provider': 'provider', 'goods': 'goods_id', 'goods_ex': 'goods'}
 
     return ds_prov.format([], json)
-
-@router_v1.get("/provider_info", tags=['Конфигурация'], summary='Получение connection_info провайдеров')
-def get_provider_info(provider: int, db=Depends(dependencies.get_db)) -> str:
-    prov = db.provider_info(provider)
-
-    ds_prov = dataset.DataSet(description=prov.statement.subquery().columns.keys(),
-                              data=[v.as_dict() for v in prov.all()])
-    # json = {'id': 'id', 'name': 'name'}
-
-    for p in ds_prov:
-        s = 'sdf'
-
-    # print(ds_prov.format([], json))
-    return ''  # ds_prov.format([], json)
