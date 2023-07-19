@@ -35,3 +35,11 @@ class Vw(Base, IView):
 
 class MapGoods(Base, IView):
     __table__ = Table('map_goods', metadata, autoload=True)
+
+
+class Transactions(Base, IView):
+    __table__ = Table('transaction', metadata, autoload=True)
+
+
+class Apikey(Base, IView):
+    __table__ = Table('apikey', metadata, autoload=True)

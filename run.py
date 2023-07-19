@@ -4,11 +4,13 @@ from typing import Optional
 
 import uvicorn
 
+from adapter.db.worker import Worker
 from adapter.main import app
 from enumex import IntEnumDesc
 
 
 uvicorn.run(app, host="0.0.0.0", port=5000)
+
 
 # @dataclass
 # class Order:
@@ -49,19 +51,32 @@ uvicorn.run(app, host="0.0.0.0", port=5000)
 #t:str = OrderType(orderType).name
 # from sqlalchemy.orm import create_session
 # from sqlalchemy import create_engine, Column, Integer
-# from sqlalchemy.orm import declarative_base
+# from sqlalchemy.orm import declarative_base, sessionmaker
 # from sqlalchemy.schema import Table, MetaData
 #
 # # from sqlalchemy_views import CreateView
 #
-# engine = create_engine("postgresql+psycopg2://postgres:sys5tem6@127.0.0.1/AdapterPC")
+# engine = create_engine("postgresql+psycopg2://postgres:sys5tem6@127.0.0.1/adapterpc")
 # session = create_session(bind=engine)
 # Base = declarative_base()
 # metadata = MetaData()
-# metadata.reflect(bind=engine, views=True)
-
+# metadata.reflect(bind=engine)
 #
-# db = worker.Worker()
+#
+# class DBTransactions(Base):
+#     __table__ = Table('transaction', metadata, autoload=True)
+#
+# t = DBTransactions()
+# t.order_id = 'dgfg'
+#
+#
+# session.add(t)
+# session.commit()
+#with session.begin() as s:
+#    s.add(t)
+
+
+#db = orker.Worker()
 # q = db.stations(3)
 #
 # prov = db.providers()

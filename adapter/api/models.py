@@ -94,20 +94,20 @@ class TypePlat(IntEnumDesc):
 
 
 class Order(BaseModel):
-    class __PayInfo(BaseModel):
+    class PayInfo(BaseModel):
         emitent: int = Field(...,
                              title='Идентификатор процессинга для финансовых расчетов')  # идентификатор процессинга для финансовых расчетов (Леонид, Инвойсбокс) ||||   1
         identifier: str = Field(...,
                                 title='Идентификатор платежа (номер карты)')  # идентификатор платежа (номер карты) (с чего списываем (банковская, куэр))
 
-    class __Pos(BaseModel):
+    class Pos(BaseModel):
         provider: int = Field(..., title='Идентификатор системы управления АЗС',
                               description=openapi.descriptions.enum(
                                   ProviderType))  # идентификатор системы управления АЗС   ПО POS ПРОВАЙДЕРА Инвойсбокс
         identifier: str = Field(..., title='Идентификатор АЗС')  # идентификатор pos
 
-    payInfo: Optional[__PayInfo]
-    pos: __Pos
+    payInfo: Optional[PayInfo]
+    pos: Pos
     orderId: Optional[str] = Field(None, title='Идентификатор заказа')
     date: datetime = Field(..., title='Дата и время создания в UTC')
     type: OrderType = Field(..., title='Тип заказа', description=openapi.descriptions.enum(OrderType))

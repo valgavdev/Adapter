@@ -27,13 +27,19 @@ def get_provider_info(provider: int, db: Depends(dependencies.get_db)) -> Provid
 
 class BaseAdapter(ABC):
     @staticmethod
-    def create(type: int, db: Depends(dependencies.get_db), ts94=Depends(dependencies.get_ts94)) -> 'BaseAdapter':
-        provider_info = get_provider_info(type, db)
+    def create(type: int, db: Depends(dependencies.get_db), ts94=Depends(dependencies.get_ts94),
+               provider_type: Optional[int] = None) -> 'BaseAdapter':
+        if not provider_type:
+            provider_info = get_provider_info(type, db)
         if (provider_info.type == ProviderType.Yandex.value):
             from .yandexadapter import YandexAdapter
-            return YandexAdapter(provider_info, ts94)
+            return YandexAdapter(provider_info, ts94, db)
         raise Exception('No Api')
 
     @abstractmethod
     def payment(self, orders: models.Order):
+        pass
+
+    @abstractmethod
+    def confirm(self, orderId: str, amount: float):
         pass

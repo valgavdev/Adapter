@@ -1,10 +1,14 @@
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Optional, List
 
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import create_session
 from sqlalchemy import and_
+from sqlalchemy.schema import Table, MetaData, Column
+from ..api import models
 
-from . import db_engine, Provider, Price, Vw, MapGoods, ProviderInfo
+from . import db_engine, Provider, Price, Vw, MapGoods, ProviderInfo, Transactions, Base, metadata, Apikey
 
 
 class Worker(object):
@@ -47,3 +51,43 @@ class Worker(object):
 
     def prices(self):
         return self.__session.query(Price)
+
+    def apikey(self, key: str):
+        return self.__session.query(Apikey).filter(Apikey.key == key)
+
+    def get_transactions(self, orderId: str):
+        return self.__session.query(Transactions).order_by(Transactions.id).filter(Transactions.order_id == orderId)
+
+    def insert_transaction(self, order: models.Order):
+        trans = Transactions()
+        trans.order_id = order.orderId
+        trans.pay_info_emitent = order.payInfo.emitent
+        trans.pay_info_identifier = order.payInfo.identifier
+        trans.pos_identifier = order.pos.identifier
+        trans.pos_provider = order.pos.provider
+        trans.amount = order.amount
+        # trans.amount_completed = order
+        trans.price = order.price
+        trans.goods_ext_id = order.serviceId
+        trans.order_type = order.type
+        trans.type_plat = order.typePlat
+        trans.paid = order.paid
+        trans.dt_beg = order.date
+        trans.column_id = order.columnId
+        # trans.dt_end =
+        # trans.time_end = order.date
+        # trans.reason
+        self.__session.add(trans)
+        self.__session.commit()
+
+    def update_transaction(self, orderId: str, reason: Optional[str] = None, litre: Optional[float] = None):
+        trans = Transactions()
+        trans.order_id = orderId
+        if reason:
+            trans.reason = reason
+            trans.amount_completed = 0
+        if litre:
+            trans.amount_completed = int(litre * 100)
+        trans.dt_end = datetime.today()
+        self.__session.merge(trans)
+        self.__session.commit()
