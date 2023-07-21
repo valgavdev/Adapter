@@ -49,6 +49,7 @@ class Deal:
     card: Optional[int] = None  # = field(metadata=config(exclude=ExcludeIfNone), default=None)
     order: Optional[OrderInfo] = None
     payment_id: Optional[str] = None
+    quantity: Optional[int] = None
 
 
 class TS94(object):
@@ -73,6 +74,7 @@ class TS94(object):
         emitent = order.payInfo.emitent
         card = None
         payment_id = None
+        quantity = None
 
         if method == 'payment':
             orderInfo = OrderInfo(service=Service(order.serviceId), price=order.price)
@@ -87,6 +89,7 @@ class TS94(object):
                 orderInfo.quantity = order.amount
         else:
             payment_id = order.orderId
+            quantity = order.amount
 
         deal = Deal(
             emitent=emitent,
@@ -94,14 +97,14 @@ class TS94(object):
             provider=order.pos.provider,
             POS=Pos(
                 order.pos.identifier
-            ), order=orderInfo, payment_id=payment_id)
+            ), order=orderInfo, payment_id=payment_id, quantity=quantity)
 
-        http_logger.info(f'payment:{asdict(deal)}')
+        http_logger.info(f'{method}:{asdict(deal)}')
 
         response = self.__client.exec(method, str(uuid.uuid4()), version='v1', header=self.__headers(),
                                       params=asdict(deal))
 
-        http_logger.info(f'response: {response}')
+        http_logger.info(f'method: {method}; response: {response}')
         return response['result']
 
     def cancel(self, order: models.Order):

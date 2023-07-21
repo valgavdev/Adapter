@@ -9,6 +9,7 @@ from . import models
 from .models import ProviderType, ProviderInfo
 from .yandex.protocol import YandexApi
 from .. import dependencies
+from ..api.yandex import models as yandexmodels
 from ..db.worker import Worker
 
 
@@ -42,4 +43,8 @@ class BaseAdapter(ABC):
 
     @abstractmethod
     def confirm(self, orderId: str, amount: float):
+        pass
+
+    @abstractmethod
+    def send_order(self, ya: yandexmodels.Order, is_time: bool = False):
         pass

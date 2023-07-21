@@ -58,7 +58,7 @@ class Worker(object):
     def get_transactions(self, orderId: str):
         return self.__session.query(Transactions).order_by(Transactions.id).filter(Transactions.order_id == orderId)
 
-    def insert_transaction(self, order: models.Order):
+    def insert_transaction(self, order: models.Order, json: str):
         trans = Transactions()
         trans.order_id = order.orderId
         trans.pay_info_emitent = order.payInfo.emitent
@@ -74,13 +74,15 @@ class Worker(object):
         trans.paid = order.paid
         trans.dt_beg = order.date
         trans.column_id = order.columnId
+        trans.to_sts = json
         # trans.dt_end =
         # trans.time_end = order.date
         # trans.reason
         self.__session.add(trans)
         self.__session.commit()
 
-    def update_transaction(self, orderId: str, reason: Optional[str] = None, litre: Optional[float] = None):
+    def update_transaction(self, orderId: str, reason: Optional[str] = None, litre: Optional[float] = None,
+                           yandex_order: Optional[str] = None):
         trans = Transactions()
         trans.order_id = orderId
         if reason:

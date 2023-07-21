@@ -1,12 +1,12 @@
 import json
 import string
 import random
+from dataclasses import asdict
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from fastapi import HTTPException, Request
-
-from fastapi import Depends
+from fastapi import Depends, BackgroundTasks
 
 import dataset
 from . import router_v1
@@ -14,9 +14,10 @@ from ..api import models, baseadapter
 from adapter import dependencies
 import exceptionex
 from ..api.ts94 import TS94
+from ..api.yandex.models import OrderStatus
 from ..exceptions import CardNotExist, PumpBusy, NotFoundApikey, TransactionNotFound
 from ..logger import http_logger
-
+from ..api.yandex import models as yandexmodels
 
 @router_v1.post("/payment", tags=['Заказы'], summary='Оформление заказа')
 def payment(order: models.Order,
@@ -44,9 +45,9 @@ class StatusType(str, Enum):
     bank_card_ticket = 'bank_card_ticket'
 
 
-@router_v1.post("/order_status/{status}", tags=['Заказы'], summary='Статус заказа')
-@router_v1.post("/order_status/{rest_of_path:path}/{status}", tags=['Заказы'], summary='Статус заказа')
-def order_status(status: StatusType, orderId: Optional[str] = None, rest_of_path: Optional[str] = None,
+@router_v1.post("/order_status/{status}", tags=['Заказы'], summary='Статус заказа', response_model_exclude_none=True)
+@router_v1.post("/order_status/{rest_of_path:path}/{status}", tags=['Заказы'], summary='Статус заказа', response_model_exclude_none=True)
+def order_status(status: StatusType, background_tasks: BackgroundTasks, orderId: Optional[str] = None, rest_of_path: Optional[str] = None,
                  apikey: Optional[str] = None,
                  litre: Optional[float] = None, extendedOrderId: Optional[str] = None,
                  extendedDate: Optional[str] = None, reason: Optional[str] = None, ts94=Depends(dependencies.get_ts94),
@@ -59,8 +60,14 @@ def order_status(status: StatusType, orderId: Optional[str] = None, rest_of_path
     ds_prov = dataset.DataSet(description=prov.statement.subquery().columns.keys(),
                               data=[v.as_dict() for v in prov.all()])
     provider = -1
+    order = None
+    dt_end = None
     for row in ds_prov:
         provider = row.get('pos_provider')
+        to_sts = row.get('to_sts')
+        if to_sts:
+            order = yandexmodels.Order.from_json(to_sts)
+
     if provider == -1:
         raise TransactionNotFound()
 
@@ -69,9 +76,19 @@ def order_status(status: StatusType, orderId: Optional[str] = None, rest_of_path
     if status == StatusType.completed:
         db.update_transaction(orderId, None, litre)
         adapter.confirm(orderId, litre)
+
+        order.Status = OrderStatus.Completed.name
+        order.LitreCompleted = litre
+        order.SumPaidCompleted = round(litre * order.PriceFuel, 2)
+        order.DateEnd = datetime.now(timezone.utc).astimezone().isoformat()
+
+        background_tasks.add_task(adapter.send_order, order, True)
+        http_logger.info('method: order_status; before tasks')
+        return
+
     if status == StatusType.accept:
         return
     if status == StatusType.canceled:
         db.update_transaction(orderId, reason, None)
-        #adapter.confirm(orderId, 0.00)
+        adapter.confirm(orderId, 0.00)
     return

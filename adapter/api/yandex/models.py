@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from datetime import datetime
 from enum import IntEnum
 from typing import Optional
@@ -34,20 +35,21 @@ class OrderStatus(IntEnumDesc):
 #     "Status": "OrderCreated"
 # }
 
-
+@dataclass_json
 @dataclass
 class Order:
-    Id: str 			    # идентификатор заказа !!!
-    DateCreate: str    # дата и время создания в UTC
-    OrderType: str    # тип заказа
-    OrderVolume: float      # значение заказа
-    StationExtendedId: str  # внешний идентификатор станции АЗС
-    ColumnId: int           # номер колонки
-    FuelExtendedId: str     # внешний идентификатор прайса
-    PriceFuel: float        # стоимость 1 литра топлива
-    Sum: float              # сумма заказа
-    Litre: float            # кол-во литров
-    Status: str     # статус заказ
+    Id: Optional[str] = None 			    # идентификатор заказа !!!
+    DateCreate: Optional[str] = None    # дата и время создания в UTC
+    OrderType: Optional[str] = None    # тип заказа
+    OrderVolume: Optional[float] = None      # значение заказа
+    StationExtendedId: Optional[str] = None  # внешний идентификатор станции АЗС
+    ColumnId: Optional[int] = None           # номер колонки
+    FuelExtendedId: Optional[str] = None     # внешний идентификатор прайса
+    PriceFuel: Optional[float] = None        # стоимость 1 литра топлива
+    Sum: Optional[float] = None              # сумма заказа
+    SumPaid: Optional[float] = None  # сумма заказа
+    Litre: Optional[float] = None            # кол-во литров
+    Status: Optional[str] = None     # статус заказ
     DateEnd: Optional[str] = None      # дата и время завершения заказа UTC
     ReasonId: Optional[str] = None           # идентификатор причины отмены заказа
     Reason: Optional[str] = None             # причина отмены

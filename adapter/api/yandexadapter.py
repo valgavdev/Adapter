@@ -3,7 +3,7 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Optional
-
+import time
 from fastapi import Depends
 
 import dataset
@@ -16,6 +16,7 @@ import requests
 
 from .. import dependencies
 from ..exceptions import PumpBusy, StationOrPumpNotFound, ExchangeError
+from ..logger import http_logger
 
 
 class YandexAdapter(baseadapter.BaseAdapter):
@@ -44,9 +45,11 @@ class YandexAdapter(baseadapter.BaseAdapter):
 
         orders.orderId = self.__ts94.payment_confirm('payment', orders)
 
-        self.__db.insert_transaction(orders)
-
         yandexOrder = self.convert_to(OrderStatus.OrderCreated, orders)
+
+        # json = asdict(yandexOrder)
+        # s= json.dumps(asdict(yandexOrder))
+        self.__db.insert_transaction(orders, json.dumps(asdict(yandexOrder)))
 
         if not self.send_order(yandexOrder):
             raise ExchangeError('STS')
@@ -67,9 +70,9 @@ class YandexAdapter(baseadapter.BaseAdapter):
         for row in ds_trans:
             order = models.Order(orderId=orderId, amount=sum, columnId=row.get('column_id'),
                                  payInfo=models.Order.PayInfo(emitent=row.get('pay_info_emitent'),
-                                                                identifier=row.get('pay_info_identifier')),
+                                                              identifier=row.get('pay_info_identifier')),
                                  pos=models.Order.Pos(identifier=row.get('pos_identifier'),
-                                                            provider=row.get('pos_provider')),
+                                                      provider=row.get('pos_provider')),
                                  price=row.get('price'), serviceId=row.get('goods_ext_id'),
                                  type=row.get('order_type'), typePlat=row.get('type_plat'), paid=row.get('paid'),
                                  date=row.get('dt_beg'))
@@ -88,10 +91,15 @@ class YandexAdapter(baseadapter.BaseAdapter):
 
         res = self.__ts94.payment_confirm('payment_confirm', order)
 
-    def send_order(self, ya: yandexmodels.Order) -> bool:
-        response = requests.post(f"{self.__url}order", json=asdict(ya),
-                                 params={'apikey': self.__apikey})
-
+    def send_order(self, ya: yandexmodels.Order, is_time: bool = False) -> bool:
+        prepare = asdict(ya, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
+        http_logger.info(f'method: send_order; request: {prepare}')
+        if is_time:
+            time.sleep(1)
+            http_logger.info(f'method: send_order; is_time')
+        response = requests.post(f"{self.__url}order", data=json.dumps(prepare), params={'apikey': self.__apikey})
+        # response = requests.post(f"http://localhost:6952/OnlineService.asmx/tresp", data=json.dumps(prepare))
+        http_logger.info(f'method: send_order; response: {response.status_code}')
         if response.status_code == 404:
             raise PumpBusy()
         if response.status_code == 400:
@@ -106,8 +114,8 @@ class YandexAdapter(baseadapter.BaseAdapter):
 
         yandex = yandexmodels.Order(Id=orders.orderId,
                                     DateCreate=orders.date.isoformat(),
-                                    OrderType=OrderStatus(orders.type).name,
-                                    OrderVolume=orders.amount,
+                                    OrderType=OrderType(orders.type).name,
+                                    OrderVolume=orders.amount / 100.0,
                                     StationExtendedId=orders.pos.identifier,
                                     ColumnId=orders.columnId,
                                     FuelExtendedId=orders.serviceId,
@@ -123,7 +131,7 @@ class YandexAdapter(baseadapter.BaseAdapter):
         else:
             yandex.Litre = float(orders.amount) / 100
             yandex.Sum = round(float(orders.price * orders.amount) / 10000, 2)
-
+        yandex.SumPaid = yandex.Sum
         return yandex
 
         # return self.send_order(json.dumps(yandex.__dict__))

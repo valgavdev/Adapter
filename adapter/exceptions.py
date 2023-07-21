@@ -33,7 +33,7 @@ class PriceIncorrect(BaseException):
 
 class NotConnected(BaseException):
     def __init__(self, text: str):
-        super().__init__(503, f'Нет соединения c {text}')
+        super().__init__(2503, f'Нет соединения c {text}')
 
 
 class ExchangeError(BaseException):
