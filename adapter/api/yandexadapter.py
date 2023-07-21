@@ -55,11 +55,6 @@ class YandexAdapter(baseadapter.BaseAdapter):
             raise ExchangeError('STS')
         return orders
 
-        # api = YandexApi()
-        # res = api.payment(yandexOrder)
-        # конвертим res в ответ для мобильного
-        # pass
-
     def confirm(self, orderId: str, sumpaid: float):
         trans = self.__db.get_transactions(orderId)
 
@@ -76,18 +71,6 @@ class YandexAdapter(baseadapter.BaseAdapter):
                                  price=row.get('price'), serviceId=row.get('goods_ext_id'),
                                  type=row.get('order_type'), typePlat=row.get('type_plat'), paid=row.get('paid'),
                                  date=row.get('dt_beg'))
-            # order.orderId = row.get('order_id')
-            # order.amount = amount * 100
-            # order.columnId = row.get('column_id')
-            # order.payInfo.emitent = row.get('pay_info_emitent')
-            # order.payInfo.identifier = row.get('pay_info_identifier')
-            # order.pos.identifier = row.get('pos_identifier')
-            # order.pos.provider = row.get('pos_provider')
-            # order.price = row.get('price')
-            # order.serviceId = row.get('goods_ext_id')
-            # order.type = row.get('order_type')
-            # order.typePlat = row.get('type_plat')
-            # order.paid = row.get('paid')
 
         res = self.__ts94.payment_confirm('payment_confirm', order)
 
@@ -95,10 +78,10 @@ class YandexAdapter(baseadapter.BaseAdapter):
         prepare = asdict(ya, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
         http_logger.info(f'method: send_order; request: {prepare}')
         if is_time:
-            time.sleep(1)
+            time.sleep(2)
             http_logger.info(f'method: send_order; is_time')
-        response = requests.post(f"{self.__url}order", data=json.dumps(prepare), params={'apikey': self.__apikey})
-        # response = requests.post(f"http://localhost:6952/OnlineService.asmx/tresp", data=json.dumps(prepare))
+        #response = requests.post(f"{self.__url}order", data=json.dumps(prepare), params={'apikey': self.__apikey})
+        response = requests.post(f"http://localhost:6952/OnlineService.asmx/tresp", data=json.dumps(prepare))
         http_logger.info(f'method: send_order; response: {response.status_code}')
         if response.status_code == 404:
             raise PumpBusy()

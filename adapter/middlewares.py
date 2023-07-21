@@ -25,7 +25,7 @@ class LoggingMiddleware:
         await self.set_body(request, body)
         return body
 
-    async def __call__(self, request: Request, call_next, *args, **kwargs):
+    async def __call__(self, request: Request, call_next, *args, **kwargs) -> Response:
         request_body = await request.body()
         await self.set_body(request, request_body)
         request_body = await self.get_body(request)
@@ -40,20 +40,20 @@ class LoggingMiddleware:
         http_logger.info(f'url: {request.url}\n\theaders: {request.headers}\n\tbody: {request_body}')
 
         response = await call_next(request)
-        # response_body = b''
-        # async for chunk in response.body_iterator:
-        #     response_body += chunk
-        #
-        # response = Response(
-        #     content=response_body,
-        #     status_code=response.status_code,
-        #     headers=dict(response.headers),
-        #     media_type=response.media_type
-        # )
-        # if len(response_body) > 1000:
-        #     response_body = response_body[:1000]
-        #
-        # http_logger.info(f'{request_body.decode()}\n\t-> {response_body.decode()}')
+        response_body = b''
+        async for chunk in response.body_iterator:
+            response_body += chunk
+
+        response = Response(
+            content=response_body,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.media_type
+        )
+        if len(response_body) > 1000:
+            response_body = response_body[:1000]
+
+        http_logger.info(f'{request_body.decode()}\n\t-> {response_body.decode()}')
 
         return response
 

@@ -1,23 +1,25 @@
-import json
-import string
-import random
+from asyncio import get_event_loop
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
+from functools import partial
+
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
-
-from fastapi import Depends, BackgroundTasks
-
+import json
+from fastapi import Depends
+import time
 import dataset
 from . import router_v1
 from ..api import models, baseadapter
 from adapter import dependencies
-import exceptionex
-from ..api.ts94 import TS94
+
 from ..api.yandex.models import OrderStatus
-from ..exceptions import CardNotExist, PumpBusy, NotFoundApikey, TransactionNotFound
+from ..exceptions import CardNotExist, PumpBusy, NotFoundApikey, TransactionNotFound, StationOrPumpNotFound
 from ..logger import http_logger
 from ..api.yandex import models as yandexmodels
+import requests
+
 
 @router_v1.post("/payment", tags=['Заказы'], summary='Оформление заказа')
 def payment(order: models.Order,
@@ -45,9 +47,17 @@ class StatusType(str, Enum):
     bank_card_ticket = 'bank_card_ticket'
 
 
+def run_sync_code(task, *args, **kwargs):
+    executor = ThreadPoolExecutor()
+    loop = get_event_loop()
+    loop.run_in_executor(executor, partial(task, *args, **kwargs))
+
+
 @router_v1.post("/order_status/{status}", tags=['Заказы'], summary='Статус заказа', response_model_exclude_none=True)
-@router_v1.post("/order_status/{rest_of_path:path}/{status}", tags=['Заказы'], summary='Статус заказа', response_model_exclude_none=True)
-def order_status(status: StatusType, background_tasks: BackgroundTasks, orderId: Optional[str] = None, rest_of_path: Optional[str] = None,
+@router_v1.post("/order_status/{rest_of_path:path}/{status}", tags=['Заказы'], summary='Статус заказа',
+                response_model_exclude_none=True)
+async def order_status(status: StatusType, orderId: Optional[str] = None,
+                 rest_of_path: Optional[str] = None,
                  apikey: Optional[str] = None,
                  litre: Optional[float] = None, extendedOrderId: Optional[str] = None,
                  extendedDate: Optional[str] = None, reason: Optional[str] = None, ts94=Depends(dependencies.get_ts94),
@@ -74,15 +84,15 @@ def order_status(status: StatusType, background_tasks: BackgroundTasks, orderId:
     adapter = baseadapter.BaseAdapter.create(provider, db, ts94)
 
     if status == StatusType.completed:
-        db.update_transaction(orderId, None, litre)
-        adapter.confirm(orderId, litre)
+        # db.update_transaction(orderId, None, litre)
+        # adapter.confirm(orderId, litre)
 
         order.Status = OrderStatus.Completed.name
         order.LitreCompleted = litre
         order.SumPaidCompleted = round(litre * order.PriceFuel, 2)
         order.DateEnd = datetime.now(timezone.utc).astimezone().isoformat()
-
-        background_tasks.add_task(adapter.send_order, order, True)
+        run_sync_code(adapter.send_order, order, True)
+        # background_tasks.add_task(adapter.send_order, order, True)
         http_logger.info('method: order_status; before tasks')
         return
 
